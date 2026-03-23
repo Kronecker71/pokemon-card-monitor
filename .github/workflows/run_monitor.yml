@@ -1,31 +1,32 @@
-name: ToysRUs Debug Monitor
+name: ToysRUs 5min Stock Monitor
 
 on:
-  workflow_dispatch: # 今回は手動実行専用にします
+  schedule:
+    # 5分おきに自動実行する魔法の呪文
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # 手動実行ボタンも残しておきます
 
 jobs:
-  debug-build:
+  build:
     runs-on: ubuntu-latest
     
     steps:
-      - name: 1. コードの取得
+      - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: 2. フォルダの中身を丸裸にする（★超重要）
-        run: ls -la
-
-      - name: 3. Pythonの準備
+      - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
-      - name: 4. 直接インストール（requirements.txtの罠を回避）
+      - name: Install dependencies
+        # requirements.txtを使わず、ここで直接インストールするのが一番確実です！
         run: |
           python -m pip install --upgrade pip
           pip install requests playwright
           playwright install chromium --with-deps
 
-      - name: 5. 実行
+      - name: Run script
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python monitor.py
