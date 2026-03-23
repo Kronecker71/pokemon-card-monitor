@@ -1,12 +1,9 @@
 import os
-import time
 import requests
-from datetime import datetime, timedelta
 from playwright.sync_api import sync_playwright
 
 # --- 監視対象の設定 ---
 WATCH_LIST = {
-    "4521329427270": "スタートデッキ100　バトルコレクション",
     "4521329431161": "ポケモンカードゲーム メガブレイブ BOX",
     "4521329431185": "ポケモンカードゲーム MEGA 拡張パック メガシンフォニア BOX",
     "4521329431529": "ポケモンカードゲーム MEGA 拡張パック インフェルノX BOX",
@@ -14,18 +11,25 @@ WATCH_LIST = {
     "4521329432274": "ポケモンカードゲーム MEGA 拡張パック ムニキスゼロ BOX",
     "4521329432786": "ポケモンカードゲーム MEGA 拡張パック ニンジャスピナー BOX",
     "4521329362342": "ポケモンカードゲーム ハイクラスパック テラスタルフェスex BOX",
-    "4521329462011": "ポケモンカードゲーム MEGA スペシャルカードセット メガエルレイドex"
+    "4521329462011": "ポケモンカードゲーム MEGA スペシャルカードセット メガエルレイドex",
+    "4521329427270": "ポケモンカードゲーム MEGA スタートデッキ100 バトルコレクション"
 }
 
-# --- 設定（GitHub Secretsから読み込み） ---
+# --- 設定 ---
+# 🚨 Webhook URLもユーザーIDも、GitHubのSecretsから安全に読み込みます 🚨
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
+DISCORD_USER_ID = os.environ.get("DISCORD_USER_ID")
 
 def send_discord_embed(name, url):
     if not DISCORD_WEBHOOK_URL:
         return
     
+    # ★ ここであなたをメンション（@）するテキストを作ります
+    mention = f"<@{DISCORD_USER_ID}> " if DISCORD_USER_ID else ""
+    
     data = {
-        "content": f"🚨 **{name}** 🚨\n検索にヒットしました！在庫復活の可能性があります！",
+        # メッセージの先頭にメンションが付きます！
+        "content": f"{mention}🚨 **{name}** 🚨\n検索にヒットしました！在庫復活の可能性があります！",
         "embeds": [{
             "title": f"🛒 {name} の購入ページへ",
             "url": url,
@@ -34,8 +38,9 @@ def send_discord_embed(name, url):
     }
     try:
         requests.post(DISCORD_WEBHOOK_URL, json=data, timeout=10)
-    except:
-        pass
+        print(f"[{name}] 🔔 Discordへ通知を送信しました！")
+    except Exception as e:
+        print(f"[{name}] 通知エラー: {e}")
 
 def check_stock():
     with sync_playwright() as p:
@@ -47,7 +52,6 @@ def check_stock():
         for jan, name in WATCH_LIST.items():
             url = f"https://www.toysrus.co.jp/search/?q={jan}"
             try:
-                # タイムアウトを少し長めに設定
                 page.goto(url, wait_until="domcontentloaded", timeout=60000)
                 page.wait_for_timeout(3000)
                 
@@ -66,5 +70,4 @@ def check_stock():
         browser.close()
 
 if __name__ == "__main__":
-    # GitHub Actions側で5分おきに叩くので、while True（ループ）は不要です
     check_stock()
