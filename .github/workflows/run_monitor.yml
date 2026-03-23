@@ -2,19 +2,25 @@ name: ToysRUs 5min Stock Monitor
 
 on:
   schedule:
-    # クラウドサーバーが5分おきに起動する設定
     - cron: '*/5 * * * *'
-  workflow_dispatch: # 手動で動かしたい時用
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # ★追加：Node.js 24を強制的に使用するフラグ
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
+      # ★v4からv5にアップデート
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        # ★v5からv6にアップデート
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -26,6 +32,5 @@ jobs:
 
       - name: Run script
         env:
-          # ★ここでGitHubに隠したWebhook URLをスクリプトに渡します！
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python monitor.py
