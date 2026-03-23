@@ -2,9 +2,8 @@ name: ToysRUs 5min Stock Monitor
 
 on:
   schedule:
-    # 5分おきに自動実行する魔法の呪文
     - cron: '*/5 * * * *'
-  workflow_dispatch: # 手動実行ボタンも残しておきます
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,7 +19,6 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        # requirements.txtを使わず、ここで直接インストールするのが一番確実です！
         run: |
           python -m pip install --upgrade pip
           pip install requests playwright
@@ -29,4 +27,6 @@ jobs:
       - name: Run script
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          # ★ ここで、隠したユーザーIDをPythonに渡します！
+          DISCORD_USER_ID: ${{ secrets.DISCORD_USER_ID }}
         run: python monitor.py
